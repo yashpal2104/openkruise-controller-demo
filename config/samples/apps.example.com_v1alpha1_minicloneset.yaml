@@ -1,0 +1,9 @@
+apiVersion: apps.example.com.my.domain/v1alpha1
+kind: MiniCloneSet
+metadata:
+  labels:
+    app.kubernetes.io/name: openkruise-controller-demo
+    app.kubernetes.io/managed-by: kustomize
+  name: minicloneset-sample
+spec:
+  # TODO(user): Add fields here
