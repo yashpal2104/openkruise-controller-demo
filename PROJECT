@@ -18,4 +18,12 @@ resources:
   kind: MiniCloneSet
   path: k8s.openkruise.com/v1/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: my.domain
+  group: apps.example.com
+  kind: MiniCloneSet
+  path: k8s.openkruise.com/v1/api/v1beta1
+  version: v1beta1
 version: "3"

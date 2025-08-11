@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	appsexamplecomv1 "k8s.openkruise.com/v1/api/v1"
+	appsexamplecomv1alpha1 "k8s.openkruise.com/v1/api/v1alpha1"
 )
 
 var _ = Describe("MiniCloneSet Controller", func() {
@@ -40,18 +40,22 @@ var _ = Describe("MiniCloneSet Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		minicloneset := &appsexamplecomv1.MiniCloneSet{}
+		minicloneset := &appsexamplecomv1alpha1.MiniCloneSet{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind MiniCloneSet")
 			err := k8sClient.Get(ctx, typeNamespacedName, minicloneset)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &appsexamplecomv1.MiniCloneSet{
+				resource := &appsexamplecomv1alpha1.MiniCloneSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: appsexamplecomv1alpha1.MiniCloneSetSpec{
+						Replicas:       1,
+						Image:          "nginx:1.20",
+						UpdateStrategy: appsexamplecomv1alpha1.RollingUpdateStrategyType,
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
@@ -59,7 +63,7 @@ var _ = Describe("MiniCloneSet Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &appsexamplecomv1.MiniCloneSet{}
+			resource := &appsexamplecomv1alpha1.MiniCloneSet{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 

@@ -1,0 +1,14 @@
+apiVersion: apps.example.com.my.domain/v1beta1
+kind: MiniCloneSet
+metadata:
+  labels:
+    app.kubernetes.io/name: openkruise-controller-demo
+    app.kubernetes.io/managed-by: kustomize
+  name: minicloneset-v1beta1-sample
+spec:
+  replicas: 2
+  container:
+    image: nginx:1.21
+  updateStrategy:
+    type: RollingUpdate
+    maxUnavailable: "1"

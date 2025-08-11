@@ -1,7 +1,18 @@
 /*
 Copyright 2025.
 
-Licensed under the Apache License, Version 2.0 (the "License");
+import (
+	"context"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	appsexamplecomv1beta1 "k8s.openkruise.com/v1/api/v1beta1"
+).k8s.io/controller-runtime/pkg/log"
+
+	appsexamplecomv1beta1 "k8s.openkruise.com/v1/api/v1beta1" under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
@@ -28,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	appsexamplecomv1 "k8s.openkruise.com/v1/api/v1"
+	appsexamplecomv1alpha1 "k8s.openkruise.com/v1/api/v1alpha1"
 )
 
 // MiniCloneSetReconciler reconciles a MiniCloneSet object
@@ -55,51 +66,28 @@ func (r *MiniCloneSetReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	log := logf.FromContext(ctx)
 
 	// Fetch the MiniCloneSet instance
-	var myCR appsexamplecomv1.MiniCloneSet
+	var myCR appsexamplecomv1alpha1.MiniCloneSet
 	if err := r.Get(ctx, req.NamespacedName, &myCR); err != nil {
 		log.Error(err, "unable to fetch MiniCloneSet")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Get current pods for this MiniCloneSet
-	podList := &corev1.PodList{}
-	listOpts := []client.ListOption{
-		client.InNamespace(myCR.Namespace),
-		client.MatchingLabels(map[string]string{
-			"app": myCR.Name,
-		}),
-	}
-
-	if err := r.List(ctx, podList, listOpts...); err != nil {
-		log.Error(err, "unable to list pods")
+	// Log Replicas and Image as requested
+	log.Info("Reconciling MiniCloneSet",
+		"replicas", myCR.Spec.Replicas,
+		"image", myCR.Spec.Image) // Fake status update: set AvailableReplicas = Replicas
+	myCR.Status.AvailableReplicas = myCR.Spec.Replicas
+	if err := r.Status().Update(ctx, &myCR); err != nil {
+		log.Error(err, "failed to update MiniCloneSet status")
 		return ctrl.Result{}, err
 	}
 
-	// Get the desired state
-	desiredReplicas := myCR.Spec.Replicas
-	desiredImage := myCR.Spec.Image
-	updateStrategy := myCR.Spec.UpdateStrategy
-
-	log.Info("Reconciling MiniCloneSet",
-		"replicas", desiredReplicas,
-		"image", desiredImage,
-		"strategy", updateStrategy,
-		"currentPods", len(podList.Items))
-
-	// Handle different update strategies
-	switch updateStrategy {
-	case "RollingUpdate":
-		return r.handleRollingUpdate(ctx, &myCR, podList, desiredReplicas, desiredImage)
-	case "Recreate":
-		return r.handleRecreateUpdate(ctx, &myCR, podList, desiredReplicas, desiredImage)
-	default:
-		log.Info("Unknown update strategy, defaulting to RollingUpdate", "strategy", updateStrategy)
-		return r.handleRollingUpdate(ctx, &myCR, podList, desiredReplicas, desiredImage)
-	}
+	// Return empty result as requested
+	return ctrl.Result{}, nil
 }
 
 // handleRollingUpdate implements rolling update strategy
-func (r *MiniCloneSetReconciler) handleRollingUpdate(ctx context.Context, myCR *appsexamplecomv1.MiniCloneSet, podList *corev1.PodList, desiredReplicas int, desiredImage string) (ctrl.Result, error) {
+func (r *MiniCloneSetReconciler) handleRollingUpdate(ctx context.Context, myCR *appsexamplecomv1alpha1.MiniCloneSet, podList *corev1.PodList, desiredReplicas int, desiredImage string) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
 	// Count pods by status
@@ -173,7 +161,7 @@ func (r *MiniCloneSetReconciler) handleRollingUpdate(ctx context.Context, myCR *
 }
 
 // handleRecreateUpdate implements recreate update strategy
-func (r *MiniCloneSetReconciler) handleRecreateUpdate(ctx context.Context, myCR *appsexamplecomv1.MiniCloneSet, podList *corev1.PodList, desiredReplicas int, desiredImage string) (ctrl.Result, error) {
+func (r *MiniCloneSetReconciler) handleRecreateUpdate(ctx context.Context, myCR *appsexamplecomv1alpha1.MiniCloneSet, podList *corev1.PodList, desiredReplicas int, desiredImage string) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
 	// Check if any pods need updating
@@ -231,7 +219,7 @@ func (r *MiniCloneSetReconciler) handleRecreateUpdate(ctx context.Context, myCR 
 }
 
 // createPodForMiniCloneSet creates a new pod based on the MiniCloneSet spec
-func (r *MiniCloneSetReconciler) createPodForMiniCloneSet(myCR *appsexamplecomv1.MiniCloneSet, index int) *corev1.Pod {
+func (r *MiniCloneSetReconciler) createPodForMiniCloneSet(myCR *appsexamplecomv1alpha1.MiniCloneSet, index int) *corev1.Pod {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%d", myCR.Name, index),
@@ -284,7 +272,7 @@ func isPodUpToDate(pod *corev1.Pod, desiredImage string) bool {
 // SetupWithManager sets up the controller with the Manager.
 func (r *MiniCloneSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appsexamplecomv1.MiniCloneSet{}).
+		For(&appsexamplecomv1alpha1.MiniCloneSet{}).
 		Named("minicloneset").
 		Complete(r)
 }

@@ -37,7 +37,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	appsexamplecomv1 "k8s.openkruise.com/v1/api/v1"
+	appsexamplecomv1alpha1 "k8s.openkruise.com/v1/api/v1alpha1"
+	appsexamplecomv1beta1 "k8s.openkruise.com/v1/api/v1beta1"
 	"k8s.openkruise.com/v1/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
@@ -50,7 +51,8 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(appsexamplecomv1.AddToScheme(scheme))
+	utilruntime.Must(appsexamplecomv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(appsexamplecomv1beta1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
